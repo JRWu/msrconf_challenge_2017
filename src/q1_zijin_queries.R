@@ -13,16 +13,31 @@ teams <- unique(csv.data$gh_project_name)
 team.data <- list()
 for (i in 1:length(unique(teams)))
 {
+
 	# Save the Team Name
 	temp.team <- teams[i]
+	print(paste("Exporting: ", teams[i], sep=""))
+
+
 	# Extract the Team into its own index in the list team.data
 	# This step is slow! Splits into all 1283 teams
 	team.data[[i]] <- csv.data[which(csv.data$gh_project_name == temp.team)]
 
+	team.data[[i]] <- team.data[[i]][,c("gh_first_commit_created_at","git_num_all_built_commits", "gh_project_name", "gh_team_size", "gh_sloc", "gh_test_lines_per_kloc", "gh_test_cases_per_kloc", "gh_asserts_cases_per_kloc", "tr_status")]
+
+	# Remove all NAs
+	team.data[[i]] <- team.data[[i]][complete.cases(team.data[[i]]),]
+
+	team.name <- gsub("/","", team.name)
+	
+	write.table(team.data[[i]], paste("../resources/",team.name,".csv",sep=""),sep=",", quote=F, row.names=F)
+}
+
+
+
 	# At this point, the teams can be accessed by:
 	# team.data[[x]], where x is the index in the range [1:1283]
 	# i.e team.data[[1]] will give you the data of the first team
-}
 
 
 # Sample Extraction for Team 1
