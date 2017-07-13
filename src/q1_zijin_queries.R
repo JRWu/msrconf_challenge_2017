@@ -13,11 +13,9 @@ teams <- unique(csv.data$gh_project_name)
 team.data <- list()
 for (i in 1:length(unique(teams)))
 {
-
 	# Save the Team Name
 	temp.team <- teams[i]
 	print(paste("Exporting: ", teams[i], sep=""))
-
 
 	# Extract the Team into its own index in the list team.data
 	# This step is slow! Splits into all 1283 teams
@@ -27,8 +25,9 @@ for (i in 1:length(unique(teams)))
 
 	# Remove all NAs
 	team.data[[i]] <- team.data[[i]][complete.cases(team.data[[i]]),]
+	team.data[[i]] <- unique(team.data[[i]])
 
-	team.name <- gsub("/","", team.name)
+	team.name <- gsub("/","", temp.team)
 	
 	write.table(team.data[[i]], paste("../resources/",team.name,".csv",sep=""),sep=",", quote=F, row.names=F)
 }
@@ -46,13 +45,13 @@ for (i in 1:length(unique(teams)))
 # small = [26,50]
 # medium = [51,200]
 # large = [201+]
-team.data.mini <- team.data[[1]][team.data[[1]]$gh_team_size <= 25,]
+#team.data.mini <- team.data[[1]][team.data[[1]]$gh_team_size <= 25,]
 
-team.data.small <- team.data[[1]][team.data[[1]]$gh_team_size > 25 & team.data[[1]]$gh_team_size <= 50,]
+#team.data.small <- team.data[[1]][team.data[[1]]$gh_team_size > 25 & team.data[[1]]$gh_team_size <= 50,]
 
-team.data.medium <- team.data[[1]][team.data[[1]]$gh_team_size > 50 & team.data[[1]]$gh_team_size <= 200,]
+#team.data.medium <- team.data[[1]][team.data[[1]]$gh_team_size > 50 & team.data[[1]]$gh_team_size <= 200,]
 
-team.data.large <- team.data[[1]][team.data[[1]]$gh_team_size > 200,]
+#team.data.large <- team.data[[1]][team.data[[1]]$gh_team_size > 200,]
 
 # For-loops are generally discouraged in R because they're so resource-intensive
 # Typically, the "which" keyword is used, and you can specify some condition for it to subset out rows 
@@ -61,10 +60,10 @@ team.data.large <- team.data[[1]][team.data[[1]]$gh_team_size > 200,]
 
 # i.e. If I wanted to ask: How many commits for the medium data subset have a $tr_log_num_tests_failed value of greater than 1000 (i.e. how many commits have more than 1000 errors)
 # I would type:
-rows.of.failed.commits <- which(team.data.medium$tr_log_num_tests_failed > 1000)
+#rows.of.failed.commits <- which(team.data.medium$tr_log_num_tests_failed > 1000)
 # Data in R is indexed by: data.frame.name[x.rows, y.rows]
 # Subsequently, if I want to extract those rows out to do some meaningful work on, then I can say
-team.data.medium.failed.commits <- team.data.medium[rows.of.failed.commits,]
+#team.data.medium.failed.commits <- team.data.medium[rows.of.failed.commits,]
 
 # This operation removes the necessity of iterating over the rows; now you have a subset of data where each row represents a commit that has over 1000 errors and you can do something like look at the eensity distribution of the failed tests that are greater than 1000
-plot(density(team.data.medium.failed.commits$tr_log_num_tests_failed))
+#plot(density(team.data.medium.failed.commits$tr_log_num_tests_failed))
