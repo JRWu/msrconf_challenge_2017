@@ -82,6 +82,7 @@ public class q1_zijin_main {
 		record();
 		teamSizeRecords();
 		teamSizeProjects();
+		
 		numCommits();
 		srcChurn();
 		testChurn();
@@ -89,6 +90,14 @@ public class q1_zijin_main {
 		testLinesDens();
 		testCasesDens();
 		assertsCasesDens();
+		
+		numCommitsTeamChange();
+		srcChurnTeamChange();
+		testChurnTeamChange();
+		slocTeamChange();
+		testLinesDensTeamChange();
+		testCasesDensTeamChange();
+		assertsCasesDensTeamChange();
 	}
 	
 	/**
@@ -119,6 +128,18 @@ public class q1_zijin_main {
 			sum += list.get(i);
 		}
 		return sum/list.size();
+	}
+	
+	/**
+	 * Helper function, return the team category of given team size
+	 * @param teamSize
+	 * @return
+	 */
+	public static int getTeamCategory(int teamSize) {
+		if (teamSize <= MINI_END) return 0;
+		else if (teamSize <= SMALL_END) return 1;
+		else if (teamSize <= MEDIUM_END) return 2;
+		else return 3;
 	}
 	
 	/**
@@ -1078,5 +1099,472 @@ public class q1_zijin_main {
 		fwLarge.close();
 		
 		System.out.println("Total number of records used analyzing gh_asserts_cases_per_kloc: " + totalCt);
+	}
+	
+	/**
+	 * Analyze team change on git_num_all_built_commits
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void numCommitsTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0) {
+	        		Double tempEntry = (double)(cur.git_num_all_built_commits * 3600)/secDiff(
+    						prev.gh_build_started_at, cur.gh_build_started_at);
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on git_num_all_built_commits:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
+	}
+	
+	/**
+	 * Analyze team change on git_diff_src_churn
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void srcChurnTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0) {
+	        		Double tempEntry = (double)(cur.git_diff_src_churn * 3600)/secDiff(
+    						prev.gh_build_started_at, cur.gh_build_started_at);
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on git_diff_src_churn:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
+	}
+	
+	/**
+	 * Analyze team change on git_diff_test_churn
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void testChurnTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0) {
+	        		Double tempEntry = (double)(cur.git_diff_test_churn * 3600)/secDiff(
+    						prev.gh_build_started_at, cur.gh_build_started_at);
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on git_diff_test_churn:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
+	}
+	
+	/**
+	 * Analyze team change on gh_sloc
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void slocTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0 &&
+	        			cur.gh_sloc >= prev.gh_sloc) {
+	        		Double tempEntry = (double)((cur.gh_sloc - prev.gh_sloc) * 3600)/secDiff(
+    						prev.gh_build_started_at, cur.gh_build_started_at);
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on gh_sloc:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
+	}
+	
+	/**
+	 * Analyze team change on gh_test_lines_per_kloc
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void testLinesDensTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0) {
+	        		Double tempEntry = cur.gh_test_lines_per_kloc;
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on gh_test_lines_per_kloc:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
+	}
+	
+	/**
+	 * Analyze team change on gh_test_cases_per_kloc
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void testCasesDensTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0) {
+	        		Double tempEntry = cur.gh_test_cases_per_kloc;
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on gh_test_cases_per_kloc:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
+	}
+	
+	/**
+	 * Analyze team change on gh_asserts_cases_per_kloc
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void assertsCasesDensTeamChange() throws IOException, ParseException {
+		int totalCt = 0;
+		List<List<Boolean>> list = new ArrayList<>();
+		// 0 - mini; 1 - small; 2 - medium; 3 - large
+		for (int i = 0; i < 4; i++) {
+			// true - affected; false - not affected
+			List<Boolean> tempList = new ArrayList<>();
+			list.add(tempList);
+		}
+		
+		File[] files = new File(FILE_PATH).listFiles();
+		for (File file : files) {
+			int lineCt = 0;
+			Record prev = null;
+			int prevSize = 0;
+			List<Double> prevList = new ArrayList<>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(file));
+	        String line = "";
+	        while((line = br.readLine()) != null) {
+	        	lineCt++;
+	        	if (lineCt == 1) continue;
+	        	
+	        	Record cur = new Record(line);
+	        	if (prev != null &&
+	        			cur.gh_build_started_at.compareTo(prev.gh_build_started_at) > 0) {
+	        		Double tempEntry = cur.gh_asserts_cases_per_kloc;
+	        		if (!prevList.isEmpty() && prevSize != cur.gh_team_size) {
+	        			Double prevAvg = avg(prevList);
+	        			list.get(getTeamCategory(prevSize)).add(tempEntry < prevAvg);
+	        			prevList.clear();
+	        			totalCt++;
+	        		}
+	        		prevList.add(tempEntry);
+        			prevSize = cur.gh_team_size;
+	        	}
+	        	prev = cur;
+	        }
+	        // minus one for header line
+	        lineCt--;
+		}
+		
+		System.out.println("Team change effects on gh_asserts_cases_per_kloc:");
+		int totalAffected = 0;
+		int total = 0;
+		for (int i = 0; i < 4; i++) {
+			int subTotalAffected = 0;
+			int subTotal = list.get(i).size();
+			for (int j = 0; j < subTotal; j++) {
+				if (list.get(i).get(j)) subTotalAffected++;
+			}
+			System.out.println(String.format("Team category %d: affected: %d, total: %d, percentage: %.5f",
+					i, subTotalAffected, subTotal, (double)subTotalAffected/subTotal));
+			totalAffected += subTotalAffected;
+			total += subTotal;
+		}
+		
+		System.out.println(String.format("Total: affected: %d, total: %d, percentage: %.5f\n",
+				totalAffected, total, (double)totalAffected/total));
 	}
 }
