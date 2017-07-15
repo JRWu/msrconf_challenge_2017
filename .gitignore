@@ -2,3 +2,4 @@ resources/*
 resources
 papers/*
 papers/
+src/*.class
