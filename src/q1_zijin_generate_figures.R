@@ -8,11 +8,11 @@ pdf("../submission/figures/q1_zijin_team_size_figures.pdf")
 
 # team size distribution by records
 df <- fread("../resources/results/team_size_records.csv")
-hist(df$entry, breaks=1000, xlab="Team Size", ylab="Frequency", main="Team Size Distribution Per Records")
+hist(df$entry, breaks=1000, xlab="Team Size", ylab="Frequency", main="Team Size Distribution Per Record")
 
 # team size distribution by projects
 df <- fread("../resources/results/team_size_projects.csv")
-hist(df$entry, breaks=1000, xlab="Team Size", ylab="Frequency", main="Team Size Distribution Per Projects")
+hist(df$entry, breaks=1000, xlab="Team Size", ylab="Frequency", main="Team Size Distribution Per Project")
 
 # num_commits
 df <- fread("../resources/results/num_commits.csv")

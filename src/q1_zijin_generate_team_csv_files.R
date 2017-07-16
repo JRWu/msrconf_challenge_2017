@@ -26,6 +26,7 @@ for (i in 1:length(unique(teams)))
 	# Remove all NAs
 	team.data[[i]] <- team.data[[i]][complete.cases(team.data[[i]]),]
 	team.data[[i]] <- unique(team.data[[i]])
+	team.data[[i]] <- team.data[[i]][order(team.data[[i]]$gh_build_started_at),]
 
 	team.name <- gsub("/","", temp.team)
 	
